@@ -247,6 +247,7 @@ iOS Quirks:
 #### WhatsApp
 * Note that on iOS when sharing an image and text, only the image is shared - let's hope WhatsApp creates a proper iOS extension to fix this.
 * Before using this method you may want to use `canShareVia('whatsapp'..` (see below).
+* On param url you can use "w4b" or null to normal whatsapp
 ```html
 <button onclick="window.plugins.socialsharing.shareViaWhatsApp('Message via WhatsApp', null /* img */, null /* url */, function() {console.log('share ok')}, function(errormsg){alert(errormsg)})">msg via WhatsApp (with errcallback)</button>
 ```
