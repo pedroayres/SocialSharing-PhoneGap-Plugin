@@ -21,7 +21,7 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import java.net.URLEncoder;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
@@ -567,7 +567,7 @@ public class SocialSharing extends CordovaPlugin {
                         new_intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         context.startActivity(new_intent);
                     } else {
-                        intent.setData(Uri.parse("https://api.whatsapp.com/send?phone=" + number + "&text=" + shareMessage));
+                        intent.setData(Uri.parse("https://api.whatsapp.com/send?phone=" + number + "&text=" + URLEncoder.encode(shareMessage, "UTF-8")));
                         // this was added to start the intent in a new window as suggested in #300 to prevent crashes upon return
                         // update: didn't help (doesn't seem to hurt either though)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -576,20 +576,8 @@ public class SocialSharing extends CordovaPlugin {
                         cordova.getActivity().runOnUiThread(new Runnable() {
                             public void run() {
                                 try {
-                                    if (url.equals("w4b")) {
-                                        Context context = cordova.getActivity().getApplicationContext();
-                                        Uri uri = Uri.parse("smsto:" + number);
-                                        Intent intent = new Intent(Intent.ACTION_SEND, uri);
-                                        intent.setType("text/plain");
-                                        intent.putExtra("jid", number + "@s.whatsapp.net");
-                                        intent.setPackage("com.whatsapp.w4b");
-                                        intent.putExtra(Intent.EXTRA_TEXT, shareMessage);
-                                        Intent new_intent = Intent.createChooser(intent, shareMessage);
-                                        new_intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        context.startActivity(new_intent);
-                                    } else {
-                                        cordova.startActivityForResult(plugin, intent, ACTIVITY_CODE_SENDVIAWHATSAPP);
-                                    }
+                                    cordova.startActivityForResult(plugin, intent, ACTIVITY_CODE_SENDVIAWHATSAPP);
+
                                 } catch (Exception e) {
                                     callbackContext.error(e.getMessage());
                                 }
@@ -603,7 +591,7 @@ public class SocialSharing extends CordovaPlugin {
         });
         return true;
     }
-    
+
 
     private boolean invokeSMSIntent(final CallbackContext callbackContext, JSONObject options, String p_phonenumbers) {
         final String message = options.optString("message");
