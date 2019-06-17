@@ -546,51 +546,64 @@ public class SocialSharing extends CordovaPlugin {
         MIME_Map.put("",       "*/*");
     }
 
-    private boolean shareViaWhatsAppDirectly(final CallbackContext callbackContext, String message, final String subject, final JSONArray files, final String url, final String number) {
-        // add the URL to the message, as there seems to be no separate field
-        final String shareMessage = message;
-        final SocialSharing plugin = this;
+private boolean shareViaWhatsAppDirectly(final CallbackContext callbackContext, String message, final String subject, final JSONArray files, final String url, final String number) {
+    // add the URL to the message, as there seems to be no separate field
+    final String shareMessage = message;
+    final SocialSharing plugin = this;
 
-        cordova.getThreadPool().execute(new SocialSharingRunnable(callbackContext) {
-            public void run() {
-                final Intent intent = new Intent(Intent.ACTION_VIEW);
-                try {
-                    if(url.equals("w4b")) {
-                        Context context = cordova.getActivity().getApplicationContext();
-                        Uri uri = Uri.parse("smsto:" + number);
-                        Intent intent2 = new Intent(Intent.ACTION_SEND, uri);
-                        intent2.setType("text/plain");
-                        intent2.putExtra("jid", number + "@s.whatsapp.net");
-                        intent2.setPackage("com.whatsapp.w4b");
-                        intent2.putExtra(Intent.EXTRA_TEXT, shareMessage);
-                        Intent new_intent = Intent.createChooser(intent2, shareMessage);
-                        new_intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(new_intent);
-                    } else {
-                        intent.setData(Uri.parse("https://api.whatsapp.com/send?phone=" + number + "&text=" + URLEncoder.encode(shareMessage, "UTF-8")));
-                        // this was added to start the intent in a new window as suggested in #300 to prevent crashes upon return
-                        // update: didn't help (doesn't seem to hurt either though)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    cordova.getThreadPool().execute(new SocialSharingRunnable(callbackContext) {
+        public void run() {
+            final Intent intent = new Intent(Intent.ACTION_VIEW);
+            try {
+                if(url.equals("w4b")) {
+                    Context context = cordova.getActivity().getApplicationContext();
+                    Uri uri = Uri.parse("smsto:" + number);
+                    Intent intent2 = new Intent(Intent.ACTION_SEND, uri);
+                    intent2.setType("text/plain");
+                    intent2.putExtra("jid", number + "@s.whatsapp.net");
+                    intent2.setPackage("com.whatsapp.w4b");
+                    intent2.putExtra(Intent.EXTRA_TEXT, shareMessage);
+                    Intent new_intent = Intent.createChooser(intent2, shareMessage);
+                    new_intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(new_intent);
+                } else {
+                    intent.setData(Uri.parse("https://api.whatsapp.com/send?phone=" + number + "&text=" + shareMessage));
+                    // this was added to start the intent in a new window as suggested in #300 to prevent crashes upon return
+                    // update: didn't help (doesn't seem to hurt either though)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                        // as an experiment for #300 we're explicitly running it on the ui thread here
-                        cordova.getActivity().runOnUiThread(new Runnable() {
-                            public void run() {
-                                try {
+                    // as an experiment for #300 we're explicitly running it on the ui thread here
+                    cordova.getActivity().runOnUiThread(new Runnable() {
+                        public void run() {
+                            try {
+                                if (url.equals("w4b")) {
+                                    Context context = cordova.getActivity().getApplicationContext();
+                                    Uri uri = Uri.parse("smsto:" + number);
+                                    Intent intent = new Intent(Intent.ACTION_SEND, uri);
+                                    intent.setType("text/plain");
+                                    intent.putExtra("jid", number + "@s.whatsapp.net");
+                                    intent.setPackage("com.whatsapp.w4b");
+                                    intent.putExtra(Intent.EXTRA_TEXT, shareMessage);
+                                    Intent new_intent = Intent.createChooser(intent, shareMessage);
+                                    new_intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    context.startActivity(new_intent);
+                                } else {
                                     cordova.startActivityForResult(plugin, intent, ACTIVITY_CODE_SENDVIAWHATSAPP);
-
-                                } catch (Exception e) {
-                                    callbackContext.error(e.getMessage());
                                 }
+                            } catch (Exception e) {
+                                callbackContext.error(e.getMessage());
                             }
-                        });
-                    }
-                } catch (Exception e) {
-                    callbackContext.error(e.getMessage());
+                        }
+                    });
                 }
+            } catch (Exception e) {
+                callbackContext.error(e.getMessage());
             }
-        });
-        return true;
-    }
+        }
+    });
+    return true;
+}
+
 
 
     private boolean invokeSMSIntent(final CallbackContext callbackContext, JSONObject options, String p_phonenumbers) {
